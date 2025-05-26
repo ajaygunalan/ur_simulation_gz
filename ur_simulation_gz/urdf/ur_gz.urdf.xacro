@@ -6,6 +6,7 @@
   <xacro:include filename="$(find ur_description)/urdf/ur_macro.xacro"/>
 
   <xacro:include filename="$(find ur_simulation_gz)/urdf/ur_gz.ros2_control.xacro" />
+  <xacro:include filename="$(find ur_simulation_gz)/urdf/ur_ft_sensor.xacro" />
 
   <!-- possible 'ur_type' values: ur3, ur3e, ur5, ur5e, ur7e, ur10, ur10e, ur12e, ur16e, ur15, ur20, ur30 -->
   <!-- the default value should raise an error in case this was called without defining the type -->
@@ -68,6 +69,9 @@
     >
     <origin xyz="0 0 0" rpy="0 0 0" />          <!-- position robot in the world -->
   </xacro:ur_robot>
+
+  <!-- Add the force/torque sensor to the robot -->
+  <xacro:ur_ft_sensor_gazebo prefix="$(arg tf_prefix)" />
 
   <gazebo reference="world">
   </gazebo>

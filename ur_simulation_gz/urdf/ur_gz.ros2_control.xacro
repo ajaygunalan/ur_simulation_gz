@@ -25,5 +25,8 @@
         initial_positions="${initial_positions}"
       />
       </ros2_control>
+
+      <!-- Note: Force/Torque sensor data is provided via the /wrist_ft_sensor topic -->
+      <!-- This follows the standardized naming convention used in the UR Admittance Controller -->
   </xacro:macro>
 </robot>

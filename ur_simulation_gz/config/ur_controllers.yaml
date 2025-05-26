@@ -23,6 +23,8 @@ controller_manager:
     forward_position_controller:
       type: position_controllers/JointGroupPositionController
 
+    # Force/torque sensor data is provided via the /wrist_ft_sensor topic
+
 
 speed_scaling_state_broadcaster:
   ros__parameters:
@@ -83,6 +85,9 @@ scaled_joint_trajectory_controller:
       wrist_1_joint: { trajectory: 0.2, goal: 0.1 }
       wrist_2_joint: { trajectory: 0.2, goal: 0.1 }
       wrist_3_joint: { trajectory: 0.2, goal: 0.1 }
+
+# Note: F/T sensor data is provided via the /wrist_ft_sensor topic
+# This follows the standardized naming convention used in the UR Admittance Controller
 
 forward_velocity_controller:
   ros__parameters:

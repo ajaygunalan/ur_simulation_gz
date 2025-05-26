@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <xacro:macro name="ur_ft_sensor_gazebo" params="prefix:=''">
+    <!-- F/T sensor link (minimal inertia) -->
+    <link name="${prefix}ft_sensor_link">
+      <inertial>
+        <mass value="0.001"/>
+        <inertia ixx="0.000001" ixy="0" ixz="0" iyy="0.000001" iyz="0" izz="0.000001"/>
+      </inertial>
+    </link>
+    
+    <!-- Fixed joint from tool0 to F/T sensor -->
+    <joint name="${prefix}ft_fixed_joint" type="fixed">
+      <parent link="${prefix}tool0"/>
+      <child link="${prefix}ft_sensor_link"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+    
+    <!-- Gazebo Force/Torque Sensor Plugin -->
+    <gazebo reference="${prefix}ft_fixed_joint">
+      <sensor name="tcp_fts_sensor" type="force_torque">
+        <always_on>true</always_on>
+        <update_rate>500</update_rate>
+        <visualize>true</visualize>
+        <plugin filename="gz-sim-forcetorque-system" name="gz::sim::systems::ForceTorque">
+          <joint_name>${prefix}ft_fixed_joint</joint_name>
+          <frame>child</frame>
+          <measure_direction>child_to_parent</measure_direction>
+        </plugin>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+
+</robot>

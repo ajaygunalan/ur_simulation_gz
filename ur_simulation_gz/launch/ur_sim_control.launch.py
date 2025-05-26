@@ -46,6 +46,7 @@ from launch.substitutions import (
     IfElseSubstitution,
 )
 from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 
 
@@ -94,7 +95,7 @@ def launch_setup(context, *args, **kwargs):
             controllers_file,
         ]
     )
-    robot_description = {"robot_description": robot_description_content}
+    robot_description = {"robot_description": ParameterValue(robot_description_content, value_type=str)}
 
     robot_state_publisher_node = Node(
         package="robot_state_publisher",
@@ -117,6 +118,8 @@ def launch_setup(context, *args, **kwargs):
         executable="spawner",
         arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
     )
+
+    # FT sensor data provided directly via topic instead of ros2_control
 
     # Delay rviz start after `joint_state_broadcaster`
     delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
@@ -179,15 +182,32 @@ def launch_setup(context, *args, **kwargs):
         output="screen",
     )
 
+    # Add F/T sensor bridge
+    ft_bridge = Node(
+        package="ros_gz_bridge",
+        executable="parameter_bridge",
+        name="ft_sensor_bridge",
+        arguments=[
+            "/world/empty/model/ur/joint/ft_fixed_joint/sensor/tcp_fts_sensor/force_torque@"
+            "geometry_msgs/msg/WrenchStamped[gz.msgs.Wrench"
+        ],
+        remappings=[
+            # Remap to wrist_ft_sensor to maintain consistency with the admittance controller
+            ("/world/empty/model/ur/joint/ft_fixed_joint/sensor/tcp_fts_sensor/force_torque", "/wrist_ft_sensor")
+        ]
+    )
+
     nodes_to_start = [
         robot_state_publisher_node,
         joint_state_broadcaster_spawner,
+
         delay_rviz_after_joint_state_broadcaster_spawner,
         initial_joint_controller_spawner_stopped,
         initial_joint_controller_spawner_started,
         gz_spawn_entity,
         gz_launch_description,
         gz_sim_bridge,
+        ft_bridge,
     ]
 
     return nodes_to_start
