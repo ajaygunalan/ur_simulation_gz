@@ -10,24 +10,62 @@
       </inertial>
     </link>
     
-    <!-- Fixed joint from tool0 to F/T sensor -->
-    <joint name="${prefix}ft_fixed_joint" type="fixed">
+    <!-- Tool/Payload link with significant mass to generate forces -->
+    <link name="${prefix}tool_payload">
+      <inertial>
+        <mass value="1.0"/>  <!-- 1 kg tool mass -->
+        <origin xyz="0 0 0.05" rpy="0 0 0"/>  <!-- Center of mass 5cm from sensor -->
+        <inertia ixx="0.002" ixy="0" ixz="0" iyy="0.002" iyz="0" izz="0.001"/>
+      </inertial>
+      <visual>
+        <origin xyz="0 0 0.05" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="0.04" length="0.1"/>
+        </geometry>
+        <material name="red">
+          <color rgba="0.8 0.2 0.2 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0.05" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="0.04" length="0.1"/>
+        </geometry>
+      </collision>
+    </link>
+    
+    <!-- Joint connecting sensor to tool (revolute with zero limits) -->
+    <joint name="${prefix}tool_joint" type="revolute">
+      <parent link="${prefix}ft_sensor_link"/>
+      <child link="${prefix}tool_payload"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <axis xyz="0 0 1"/>
+      <limit lower="0" upper="0" effort="1000" velocity="0"/>
+      <dynamics damping="100.0" friction="100.0"/>
+    </joint>
+    
+    <!-- Revolute joint from tool0 to F/T sensor (with zero limits to act as fixed) -->
+    <joint name="${prefix}ft_fixed_joint" type="revolute">
       <parent link="${prefix}tool0"/>
       <child link="${prefix}ft_sensor_link"/>
       <origin xyz="0 0 0" rpy="0 0 0"/>
+      <axis xyz="0 0 1"/>
+      <limit lower="0" upper="0" effort="1000" velocity="0"/>
+      <dynamics damping="100.0" friction="100.0"/>
     </joint>
     
     <!-- Gazebo Force/Torque Sensor Plugin -->
-    <gazebo reference="${prefix}ft_fixed_joint">
+    <!-- Sensor measures forces at the tool joint -->
+    <gazebo reference="${prefix}tool_joint">
       <sensor name="tcp_fts_sensor" type="force_torque">
         <always_on>true</always_on>
-        <update_rate>500</update_rate>
+        <update_rate>100</update_rate>
         <visualize>true</visualize>
-        <plugin filename="gz-sim-forcetorque-system" name="gz::sim::systems::ForceTorque">
-          <joint_name>${prefix}ft_fixed_joint</joint_name>
+        <topic>force_torque</topic>
+        <force_torque>
           <frame>child</frame>
           <measure_direction>child_to_parent</measure_direction>
-        </plugin>
+        </force_torque>
       </sensor>
     </gazebo>
   </xacro:macro>

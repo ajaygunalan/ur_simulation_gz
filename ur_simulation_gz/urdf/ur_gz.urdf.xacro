@@ -82,6 +82,8 @@
         <namespace>$(arg ros_namespace)</namespace>
       </ros>
     </plugin>
+    <!-- Force/Torque sensor system plugin -->
+    <plugin filename="gz-sim-forcetorque-system" name="gz::sim::systems::ForceTorque"/>
   </gazebo>
 
   <!-- ros2 control instance -->

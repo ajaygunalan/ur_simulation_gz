@@ -118,8 +118,13 @@ def launch_setup(context, *args, **kwargs):
         executable="spawner",
         arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
     )
-
-    # FT sensor data provided directly via topic instead of ros2_control
+    
+    # Force/Torque sensor broadcaster using ros2_control
+    force_torque_sensor_broadcaster_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["force_torque_sensor_broadcaster", "--controller-manager", "/controller_manager"],
+    )
 
     # Delay rviz start after `joint_state_broadcaster`
     delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
@@ -183,23 +188,24 @@ def launch_setup(context, *args, **kwargs):
     )
 
     # Add F/T sensor bridge
+    # Bridge the simple /force_torque topic from the revolute joint sensor
     ft_bridge = Node(
         package="ros_gz_bridge",
-        executable="parameter_bridge",
+        executable="parameter_bridge", 
         name="ft_sensor_bridge",
         arguments=[
-            "/world/empty/model/ur/joint/ft_fixed_joint/sensor/tcp_fts_sensor/force_torque@"
-            "geometry_msgs/msg/WrenchStamped[gz.msgs.Wrench"
+            "/force_torque@geometry_msgs/msg/WrenchStamped[gz.msgs.Wrench"
         ],
         remappings=[
             # Remap to wrist_ft_sensor to maintain consistency with the admittance controller
-            ("/world/empty/model/ur/joint/ft_fixed_joint/sensor/tcp_fts_sensor/force_torque", "/wrist_ft_sensor")
+            ("/force_torque", "/wrist_ft_sensor")
         ]
     )
 
     nodes_to_start = [
         robot_state_publisher_node,
         joint_state_broadcaster_spawner,
+        force_torque_sensor_broadcaster_spawner,
 
         delay_rviz_after_joint_state_broadcaster_spawner,
         initial_joint_controller_spawner_stopped,
@@ -320,7 +326,9 @@ def generate_launch_description():
     declared_arguments.append(
         DeclareLaunchArgument(
             "world_file",
-            default_value="empty.sdf",
+            default_value=PathJoinSubstitution(
+                [FindPackageShare("ur_simulation_gz"), "worlds", "ur_with_ft_sensor.sdf"]
+            ),
             description="Gazebo world file (absolute path or filename from the gazebosim worlds collection) containing a custom world.",
         )
     )

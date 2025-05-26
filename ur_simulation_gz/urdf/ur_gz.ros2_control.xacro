@@ -24,9 +24,29 @@
         tf_prefix="${tf_prefix}"
         initial_positions="${initial_positions}"
       />
+      
+      <!-- Force/Torque Sensor Hardware Interface -->
+      <sensor name="${tf_prefix}tcp_fts_sensor">
+        <state_interface name="force.x">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="force.y">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="force.z">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="torque.x">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="torque.y">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="torque.z">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+      </sensor>
+      
       </ros2_control>
-
-      <!-- Note: Force/Torque sensor data is provided via the /wrist_ft_sensor topic -->
-      <!-- This follows the standardized naming convention used in the UR Admittance Controller -->
   </xacro:macro>
 </robot>
