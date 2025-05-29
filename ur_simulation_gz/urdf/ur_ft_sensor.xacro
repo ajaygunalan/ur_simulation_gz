@@ -1,19 +1,39 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
+  <!-- Force/Torque Sensor for Gazebo Simulation -->
+  <!-- This implementation requires child links with mass for physics simulation -->
+  
   <xacro:macro name="ur_ft_sensor_gazebo" params="prefix:=''">
-    <!-- F/T sensor link (minimal inertia) -->
+    
+    <!-- F/T sensor mounting link (minimal mass) -->
     <link name="${prefix}ft_sensor_link">
       <inertial>
-        <mass value="0.001"/>
-        <inertia ixx="0.000001" ixy="0" ixz="0" iyy="0.000001" iyz="0" izz="0.000001"/>
+        <mass value="0.1"/>  <!-- 100g for sensor mount -->
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <inertia ixx="0.00001" ixy="0" ixz="0" iyy="0.00001" iyz="0" izz="0.00001"/>
       </inertial>
+      <visual>
+        <origin xyz="0 0 0.005" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="0.045" length="0.01"/>
+        </geometry>
+        <material name="gray">
+          <color rgba="0.5 0.5 0.5 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0.005" rpy="0 0 0"/>
+        <geometry>
+          <cylinder radius="0.045" length="0.01"/>
+        </geometry>
+      </collision>
     </link>
     
-    <!-- Tool/Payload link with significant mass to generate forces -->
+    <!-- Tool/End-effector link (MUST have mass for force measurement) -->
     <link name="${prefix}tool_payload">
       <inertial>
-        <mass value="1.0"/>  <!-- 1 kg tool mass -->
+        <mass value="1.0"/>  <!-- 1 kg tool mass - CRITICAL for F/T measurement -->
         <origin xyz="0 0 0.05" rpy="0 0 0"/>  <!-- Center of mass 5cm from sensor -->
         <inertia ixx="0.002" ixy="0" ixz="0" iyy="0.002" iyz="0" izz="0.001"/>
       </inertial>
@@ -22,8 +42,8 @@
         <geometry>
           <cylinder radius="0.04" length="0.1"/>
         </geometry>
-        <material name="red">
-          <color rgba="0.8 0.2 0.2 1.0"/>
+        <material name="blue">
+          <color rgba="0.2 0.2 0.8 1.0"/>
         </material>
       </visual>
       <collision>
@@ -34,40 +54,44 @@
       </collision>
     </link>
     
-    <!-- Joint connecting sensor to tool (revolute with zero limits) -->
-    <joint name="${prefix}tool_joint" type="revolute">
-      <parent link="${prefix}ft_sensor_link"/>
-      <child link="${prefix}tool_payload"/>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
-      <axis xyz="0 0 1"/>
-      <limit lower="0" upper="0" effort="1000" velocity="0"/>
-      <dynamics damping="100.0" friction="100.0"/>
-    </joint>
-    
-    <!-- Revolute joint from tool0 to F/T sensor (with zero limits to act as fixed) -->
-    <joint name="${prefix}ft_fixed_joint" type="revolute">
+    <!-- Fixed joint from tool0 to F/T sensor -->
+    <joint name="${prefix}tool0_to_ft_sensor" type="fixed">
       <parent link="${prefix}tool0"/>
       <child link="${prefix}ft_sensor_link"/>
       <origin xyz="0 0 0" rpy="0 0 0"/>
-      <axis xyz="0 0 1"/>
-      <limit lower="0" upper="0" effort="1000" velocity="0"/>
-      <dynamics damping="100.0" friction="100.0"/>
     </joint>
     
-    <!-- Gazebo Force/Torque Sensor Plugin -->
-    <!-- Sensor measures forces at the tool joint -->
-    <gazebo reference="${prefix}tool_joint">
-      <sensor name="tcp_fts_sensor" type="force_torque">
+    <!-- F/T measurement joint (sensor is here) -->
+    <joint name="${prefix}ft_sensor_joint" type="fixed">
+      <parent link="${prefix}ft_sensor_link"/>
+      <child link="${prefix}tool_payload"/>
+      <origin xyz="0 0 0.01" rpy="0 0 0"/>  <!-- Small offset for sensor thickness -->
+    </joint>
+    
+    <!-- Gazebo Force/Torque Sensor Plugin Configuration -->
+    <gazebo reference="${prefix}ft_sensor_joint">
+      <sensor name="${prefix}tcp_fts_sensor" type="force_torque">
         <always_on>true</always_on>
-        <update_rate>100</update_rate>
+        <update_rate>100</update_rate>  <!-- 100 Hz update rate -->
         <visualize>true</visualize>
         <topic>force_torque</topic>
+        <frame>${prefix}ft_sensor_link</frame>
         <force_torque>
-          <frame>child</frame>
+          <frame>child</frame>  <!-- Measure in child (tool) frame -->
           <measure_direction>child_to_parent</measure_direction>
         </force_torque>
       </sensor>
     </gazebo>
+    
+    <!-- Visual indication of sensor in Gazebo -->
+    <gazebo reference="${prefix}ft_sensor_link">
+      <material>Gazebo/Grey</material>
+    </gazebo>
+    
+    <gazebo reference="${prefix}tool_payload">
+      <material>Gazebo/Blue</material>
+    </gazebo>
+    
   </xacro:macro>
 
 </robot>

@@ -23,8 +23,8 @@ controller_manager:
     forward_position_controller:
       type: position_controllers/JointGroupPositionController
 
-    force_torque_sensor_broadcaster:
-      type: force_torque_sensor_broadcaster/ForceTorqueSensorBroadcaster
+    # NOTE: force_torque_sensor_broadcaster removed - F/T data comes via Direct Bridge
+    # gz_ros2_control does not support F/T sensor interfaces
 
 
 speed_scaling_state_broadcaster:
@@ -87,8 +87,9 @@ scaled_joint_trajectory_controller:
       wrist_2_joint: { trajectory: 0.2, goal: 0.1 }
       wrist_3_joint: { trajectory: 0.2, goal: 0.1 }
 
-# Note: F/T sensor data is provided via the /wrist_ft_sensor topic
-# This follows the standardized naming convention used in the UR Admittance Controller
+# IMPORTANT: F/T sensor data in simulation is provided via Direct Bridge
+# Topic: /wrist_ft_sensor (geometry_msgs/msg/WrenchStamped)
+# This is because gz_ros2_control does not support force/torque sensor interfaces
 
 forward_velocity_controller:
   ros__parameters:
@@ -110,16 +111,3 @@ forward_position_controller:
       - wrist_1_joint
       - wrist_2_joint
       - wrist_3_joint
-
-force_torque_sensor_broadcaster:
-  ros__parameters:
-    sensor_name: tcp_fts_sensor
-    state_interface_names:
-      - tcp_fts_sensor/force.x
-      - tcp_fts_sensor/force.y
-      - tcp_fts_sensor/force.z
-      - tcp_fts_sensor/torque.x
-      - tcp_fts_sensor/torque.y
-      - tcp_fts_sensor/torque.z
-    frame_id: tool0
-    topic_name: /wrist_ft_sensor

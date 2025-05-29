@@ -70,7 +70,7 @@
     <origin xyz="0 0 0" rpy="0 0 0" />          <!-- position robot in the world -->
   </xacro:ur_robot>
 
-  <!-- Add the force/torque sensor to the robot -->
+  <!-- Add Force/Torque sensor for simulation -->
   <xacro:ur_ft_sensor_gazebo prefix="$(arg tf_prefix)" />
 
   <gazebo reference="world">
@@ -83,7 +83,8 @@
       </ros>
     </plugin>
     <!-- Force/Torque sensor system plugin -->
-    <plugin filename="gz-sim-forcetorque-system" name="gz::sim::systems::ForceTorque"/>
+    <plugin filename="gz-sim-forcetorque-system" name="gz::sim::systems::ForceTorque">
+    </plugin>
   </gazebo>
 
   <!-- ros2 control instance -->

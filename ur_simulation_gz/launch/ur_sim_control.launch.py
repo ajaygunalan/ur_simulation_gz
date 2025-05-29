@@ -119,12 +119,8 @@ def launch_setup(context, *args, **kwargs):
         arguments=["joint_state_broadcaster", "--controller-manager", "/controller_manager"],
     )
     
-    # Force/Torque sensor broadcaster using ros2_control
-    force_torque_sensor_broadcaster_spawner = Node(
-        package="controller_manager",
-        executable="spawner",
-        arguments=["force_torque_sensor_broadcaster", "--controller-manager", "/controller_manager"],
-    )
+    # NOTE: force_torque_sensor_broadcaster removed - F/T data comes via Direct Bridge
+    # gz_ros2_control does not support F/T sensor interfaces
 
     # Delay rviz start after `joint_state_broadcaster`
     delay_rviz_after_joint_state_broadcaster_spawner = RegisterEventHandler(
@@ -187,12 +183,14 @@ def launch_setup(context, *args, **kwargs):
         output="screen",
     )
 
-    # Add F/T sensor bridge
-    # Bridge the simple /force_torque topic from the revolute joint sensor
+    # Force/Torque sensor Direct Bridge for simulation
+    # This is the ONLY way to get F/T data in Gazebo simulation since
+    # gz_ros2_control does not support force/torque sensor interfaces
     ft_bridge = Node(
         package="ros_gz_bridge",
         executable="parameter_bridge", 
         name="ft_sensor_bridge",
+        output="screen",
         arguments=[
             "/force_torque@geometry_msgs/msg/WrenchStamped[gz.msgs.Wrench"
         ],
@@ -205,15 +203,14 @@ def launch_setup(context, *args, **kwargs):
     nodes_to_start = [
         robot_state_publisher_node,
         joint_state_broadcaster_spawner,
-        force_torque_sensor_broadcaster_spawner,
-
+        # force_torque_sensor_broadcaster_spawner removed - using Direct Bridge instead
         delay_rviz_after_joint_state_broadcaster_spawner,
         initial_joint_controller_spawner_stopped,
         initial_joint_controller_spawner_started,
         gz_spawn_entity,
         gz_launch_description,
         gz_sim_bridge,
-        ft_bridge,
+        ft_bridge,  # Direct Bridge for F/T sensor data
     ]
 
     return nodes_to_start

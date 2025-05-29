@@ -25,27 +25,8 @@
         initial_positions="${initial_positions}"
       />
       
-      <!-- Force/Torque Sensor Hardware Interface -->
-      <sensor name="${tf_prefix}tcp_fts_sensor">
-        <state_interface name="force.x">
-          <param name="initial_value">0.0</param>
-        </state_interface>
-        <state_interface name="force.y">
-          <param name="initial_value">0.0</param>
-        </state_interface>
-        <state_interface name="force.z">
-          <param name="initial_value">0.0</param>
-        </state_interface>
-        <state_interface name="torque.x">
-          <param name="initial_value">0.0</param>
-        </state_interface>
-        <state_interface name="torque.y">
-          <param name="initial_value">0.0</param>
-        </state_interface>
-        <state_interface name="torque.z">
-          <param name="initial_value">0.0</param>
-        </state_interface>
-      </sensor>
+      <!-- Note: F/T sensors are handled via Direct Bridge in simulation -->
+      <!-- gz_ros2_control does not support force/torque sensor interfaces -->
       
       </ros2_control>
   </xacro:macro>
