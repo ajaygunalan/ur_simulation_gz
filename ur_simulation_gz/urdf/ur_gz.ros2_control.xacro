@@ -25,6 +25,14 @@
         initial_positions="${initial_positions}"
       />
       
+      <!-- Add F/T sensor joint state interface for transform publishing -->
+      <joint name="${tf_prefix}ft_sensor_joint">
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+      </joint>
+      
       <!-- Note: F/T sensors are handled via Direct Bridge in simulation -->
       <!-- gz_ros2_control does not support force/torque sensor interfaces -->
       
