@@ -88,7 +88,7 @@ scaled_joint_trajectory_controller:
       wrist_3_joint: { trajectory: 0.2, goal: 0.1 }
 
 # IMPORTANT: F/T sensor data in simulation is provided via Direct Bridge
-# Topic: /wrist_ft_sensor (geometry_msgs/msg/WrenchStamped)
+# Topic: /wrench_tcp_base_raw (geometry_msgs/msg/WrenchStamped)
 # This is because gz_ros2_control does not support force/torque sensor interfaces
 
 forward_velocity_controller:

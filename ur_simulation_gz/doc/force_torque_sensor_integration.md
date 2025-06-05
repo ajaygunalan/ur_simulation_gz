@@ -7,7 +7,7 @@
 
 This package implements F/T sensor simulation using the Direct Bridge approach:
 - **Method**: Gazebo physics → F/T plugin → gz topic → ros_gz_bridge → ROS2 topic
-- **Topic**: `/wrist_ft_sensor` (geometry_msgs/msg/WrenchStamped)
+- **Topic**: `/wrench_tcp_base_raw` (geometry_msgs/msg/WrenchStamped)
 - **Why**: gz_ros2_control doesn't support F/T sensors
 
 ## Critical Implementation Requirements
@@ -86,7 +86,7 @@ Gazebo Physics → Joint State Plugin → gz topic → ros_gz_bridge → /joint_
 
 #### Direct Bridge (Currently the ONLY option)
 ```
-Gazebo Physics → ForceTorque Plugin → gz topic → ros_gz_bridge → /wrist_ft_sensor
+Gazebo Physics → ForceTorque Plugin → gz topic → ros_gz_bridge → /wrench_tcp_base_raw
 ```
 - ✅ Works reliably with Gazebo physics
 - ❌ No hardware abstraction (different from real robot)
@@ -120,7 +120,7 @@ void GazeboSimSystem::registerSensors(...) {
 <!-- In launch file -->
 <node pkg="ros_gz_bridge" exec="parameter_bridge"
       args="/force_torque@geometry_msgs/msg/WrenchStamped[gz.msgs.Wrench">
-  <remap from="/force_torque" to="/wrist_ft_sensor"/>
+  <remap from="/force_torque" to="/wrench_tcp_base_raw"/>
 </node>
 ```
 
@@ -168,13 +168,13 @@ ft_bridge = Node(
     package='ros_gz_bridge',
     executable='parameter_bridge',
     arguments=['/force_torque@geometry_msgs/msg/WrenchStamped[gz.msgs.Wrench'],
-    remappings=[('/force_torque', '/wrist_ft_sensor')]
+    remappings=[('/force_torque', '/wrench_tcp_base_raw')]
 )
 
 # Subscribe in your controller
 self.ft_subscriber = self.create_subscription(
     WrenchStamped,
-    '/wrist_ft_sensor',
+    '/wrench_tcp_base_raw',
     self.ft_callback,
     10
 )
@@ -211,7 +211,7 @@ def ft_callback(self, msg):
 
 3. **Check F/T data**:
    ```bash
-   ros2 topic echo /wrist_ft_sensor
+   ros2 topic echo /wrench_tcp_base_raw
    ```
    Expected output: ~9.8N force in -Z direction (1kg tool mass × gravity)
 

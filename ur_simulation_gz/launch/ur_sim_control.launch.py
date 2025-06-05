@@ -145,6 +145,14 @@ def launch_setup(context, *args, **kwargs):
         condition=UnlessCondition(activate_joint_controller),
     )
 
+    # Load forward_velocity_controller as inactive for admittance control switching
+    forward_velocity_controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=["forward_velocity_controller", "-c", "/controller_manager", "--inactive"],
+        output="screen",
+    )
+
     # GZ nodes
     gz_spawn_entity = Node(
         package="ros_gz_sim",
@@ -195,8 +203,8 @@ def launch_setup(context, *args, **kwargs):
             "/force_torque@geometry_msgs/msg/WrenchStamped[gz.msgs.Wrench"
         ],
         remappings=[
-            # Remap to wrist_ft_sensor to maintain consistency with the admittance controller
-            ("/force_torque", "/wrist_ft_sensor")
+            # Remap to wrench_tcp_base_raw for the wrench preprocessing pipeline
+            ("/force_torque", "/wrench_tcp_base_raw")
         ]
     )
 
@@ -207,6 +215,7 @@ def launch_setup(context, *args, **kwargs):
         delay_rviz_after_joint_state_broadcaster_spawner,
         initial_joint_controller_spawner_stopped,
         initial_joint_controller_spawner_started,
+        forward_velocity_controller_spawner,  # Load as inactive for admittance control
         gz_spawn_entity,
         gz_launch_description,
         gz_sim_bridge,
