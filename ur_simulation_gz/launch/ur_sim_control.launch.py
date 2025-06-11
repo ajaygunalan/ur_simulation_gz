@@ -203,8 +203,8 @@ def launch_setup(context, *args, **kwargs):
             "/force_torque@geometry_msgs/msg/WrenchStamped[gz.msgs.Wrench"
         ],
         remappings=[
-            # Remap to wrench_tcp_base_raw for the wrench preprocessing pipeline
-            ("/force_torque", "/wrench_tcp_base_raw")
+            # Remap to wrench_tcp_tool_payload_raw to indicate it's in tool_payload frame
+            ("/force_torque", "/wrench_tcp_tool_payload_raw")
         ]
     )
 
