@@ -2,50 +2,105 @@
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
   <xacro:macro name="ur_ft_sensor_gazebo" params="prefix:=''">
-    <!-- Tool/Payload link with significant mass to generate forces -->
-    <link name="${prefix}tool_payload">
-      <inertial>
-        <mass value="1.0"/>  <!-- 1 kg tool mass -->
-        <origin xyz="0 0 0.05" rpy="0 0 0"/>  <!-- Center of mass 5cm from joint -->
-        <inertia ixx="0.002" ixy="0" ixz="0" iyy="0.002" iyz="0" izz="0.001"/>
-      </inertial>
+    <!-- ATI NET-FT Sensor Properties -->
+    <xacro:property name="sensor_dip" value="0.003" />
+    <xacro:property name="sensor_length" value="0.04906" />
+    <xacro:property name="sensor_collision_radius" value="0.065" />
+    
+    <!-- P42V Probe Properties -->
+    <xacro:property name="p42v_collision_width" value="0.065" />
+    <xacro:property name="wrist_height" value="0.035" />
+    <xacro:property name="p42v_adapter_intrusion" value="0.020" />
+    <xacro:property name="p42v_cable_end" value="0.080078" />
+    <xacro:property name="p42v_trans_len" value="0.13859" />
+    <xacro:property name="p42v_collision_height" value="${wrist_height - p42v_adapter_intrusion + p42v_cable_end + p42v_trans_len}" />
+    
+    <material name="visual_grey">
+      <color rgba="0.5 0.5 0.5 1" />
+    </material>
+    
+    <material name="visual_green">
+      <color rgba="0.0 1.0 0.3 1" />
+    </material>
+
+    <!-- NET-FT Sensor Link 0 (mounting side) -->
+    <joint name="${prefix}netft_joint0" type="fixed">
+      <parent link="${prefix}tool0"/>
+      <child link="${prefix}netft_link0"/>
+      <origin rpy="0 0 0" xyz="0 0 ${-sensor_dip}"/>
+    </joint>
+    <link name="${prefix}netft_link0">
       <visual>
-        <origin xyz="0 0 0.05" rpy="0 0 0"/>
         <geometry>
-          <cylinder radius="0.04" length="0.1"/>
+          <mesh filename="file://$(find ur_simulation_gz)/meshes/visual/ati_netft_gamma.stl" />
         </geometry>
-        <material name="blue">
-          <color rgba="0.2 0.2 0.8 1.0"/>
-        </material>
+        <material name="visual_grey" />
       </visual>
       <collision>
-        <origin xyz="0 0 0.05" rpy="0 0 0"/>
         <geometry>
-          <cylinder radius="0.04" length="0.1"/>
+          <cylinder length="${sensor_length}" radius="${sensor_collision_radius}" />
         </geometry>
+        <origin xyz="0 0 ${sensor_dip+(sensor_length/2)}" rpy="0 0 0" />
       </collision>
     </link>
+
+    <!-- NET-FT Sensor Link 1 (output side - massless frame) -->
+    <joint name="${prefix}netft_joint1" type="fixed">
+      <origin xyz="0 0 ${sensor_dip+sensor_length}" rpy="0 0 0"/>
+      <parent link="${prefix}netft_link0"/>
+      <child link="${prefix}netft_link1"/>
+    </joint>
+    <link name="${prefix}netft_link1"/>
     
     <!-- F/T measurement joint (MUST be revolute for force measurement) -->
-    <!-- Direct connection from wrist_3_link to tool_payload -->
+    <!-- Connection from sensor output to probe with mass -->
     <joint name="${prefix}ft_sensor_joint" type="revolute">
-      <parent link="${prefix}wrist_3_link"/>
-      <child link="${prefix}tool_payload"/>
+      <parent link="${prefix}netft_link1"/>
+      <child link="${prefix}p42v_link0"/>
       <origin xyz="0 0 0" rpy="0 0 0"/>  <!-- No rotation - ATI sign fix in software -->
       <axis xyz="0 0 1"/>
       <limit lower="0" upper="0" effort="1000" velocity="0"/>
       <dynamics damping="100.0" friction="100.0"/>
     </joint>
+
+    <!-- P42V Probe Link 0 (adapter with mass) -->
+    <link name="${prefix}p42v_link0">
+      <inertial>
+        <mass value="1.0"/>  <!-- 1 kg tool mass -->
+        <origin xyz="0 0 ${p42v_collision_height/2}" rpy="0 0 0"/>  <!-- Center of mass at probe center -->
+        <inertia ixx="0.002" ixy="0" ixz="0" iyy="0.002" iyz="0" izz="0.001"/>
+      </inertial>
+      <visual>
+        <geometry>
+          <mesh filename="file://$(find ur_simulation_gz)/meshes/visual/vera_p42v_adapter.stl"/>
+        </geometry>
+        <material name="visual_green" />
+      </visual>
+      <collision>
+        <geometry>
+          <box size="${p42v_collision_width} ${p42v_collision_width} ${p42v_collision_height}" />
+        </geometry>
+        <origin xyz="0 0 ${p42v_collision_height/2}" rpy="0 0 0" />
+      </collision>
+    </link>
+
+    <!-- P42V Probe Link 1 (TCP frame) -->
+    <joint name="${prefix}p42v_joint1" type="fixed">
+      <origin xyz="0 0 ${p42v_collision_height}" rpy="0 0 0" />
+      <parent link="${prefix}p42v_link0" />
+      <child link="${prefix}p42v_link1" />
+    </joint>
+    <link name="${prefix}p42v_link1" />
     
     <!-- Gazebo Force/Torque Sensor Plugin -->
-    <!-- Sensor measures forces at the tool joint -->
+    <!-- Sensor measures forces between sensor output and probe -->
     <gazebo reference="${prefix}ft_sensor_joint">
       <sensor name="${prefix}tcp_fts_sensor" type="force_torque">
         <always_on>true</always_on>
         <update_rate>100</update_rate>  <!-- 100 Hz update rate -->
         <visualize>true</visualize>
-        <topic>force_torque</topic>
-        <frame>${prefix}wrist_3_link</frame>
+        <topic>/netft/raw_sensor</topic>
+        <frame>${prefix}p42v_link0</frame>
         <force_torque>
           <frame>child</frame>  <!-- Measure in child (tool) frame -->
           <measure_direction>parent_to_child</measure_direction>
@@ -53,9 +108,13 @@
       </sensor>
     </gazebo>
     
-    <!-- Visual indication of tool in Gazebo -->
-    <gazebo reference="${prefix}tool_payload">
-      <material>Gazebo/Blue</material>
+    <!-- Visual indication in Gazebo -->
+    <gazebo reference="${prefix}netft_link0">
+      <material>Gazebo/Grey</material>
+    </gazebo>
+    
+    <gazebo reference="${prefix}p42v_link0">
+      <material>Gazebo/Green</material>
     </gazebo>
   </xacro:macro>
 

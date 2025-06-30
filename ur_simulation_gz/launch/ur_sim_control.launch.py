@@ -200,12 +200,9 @@ def launch_setup(context, *args, **kwargs):
         name="ft_sensor_bridge",
         output="screen",
         arguments=[
-            "/force_torque@geometry_msgs/msg/WrenchStamped[gz.msgs.Wrench"
-        ],
-        remappings=[
-            # Remap to F_P_P_raw for compatibility with calibration node
-            ("/force_torque", "/F_P_P_raw")
+            "/netft/raw_sensor@geometry_msgs/msg/WrenchStamped[gz.msgs.Wrench"
         ]
+        # No remapping needed - direct topic from Gazebo sensor
     )
 
     nodes_to_start = [
