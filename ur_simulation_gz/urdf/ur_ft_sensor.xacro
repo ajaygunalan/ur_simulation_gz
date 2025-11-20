@@ -100,7 +100,8 @@
         <update_rate>100</update_rate>  <!-- 100 Hz update rate -->
         <visualize>true</visualize>
         <topic>/netft/raw_sensor</topic>
-        <frame>${prefix}p42v_link0</frame>
+        <!-- Try to force Gazebo to set header.frame_id; supported in newer gz-sensors -->
+        <gz_frame_id>${prefix}netft_link1</gz_frame_id>
         <force_torque>
           <frame>child</frame>  <!-- Measure in child (tool) frame -->
           <measure_direction>parent_to_child</measure_direction>
